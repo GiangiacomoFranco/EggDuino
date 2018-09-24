@@ -1,10 +1,17 @@
+/*  Modifiche gian
+  - change void inline to inline void to solve Functions:29: error: 'sendAck' was not declared in this scope sendAck();
+
+
+
+*/
+
 /* Eggduino-Firmware by Joachim Cerny, 2014
 
    Thanks for the nice libs ACCELSTEPPER and SERIALCOMMAND, which made this project much easier.
    Thanks to the Eggbot-Team for such a funny and enjoable concept!
    Thanks to my wife and my daughter for their patience. :-)
 
- */
+*/
 
 // implemented Eggbot-Protocol-Version v13
 // EBB-Command-Reference, I sourced from: http://www.schmalzhaus.com/EBB/EBBCommands.html
@@ -17,7 +24,7 @@
 /* TODOs:
    1	collision control via penMin/penMax
    2	implement homing sequence via microswitch or optical device
- */
+*/
 
 #include "AccelStepper.h" // nice lib from http://www.airspayce.com/mikem/arduino/AccelStepper/
 #include <Servo.h>
@@ -29,15 +36,15 @@
 //Rotational Stepper:
 #define step1 11
 #define dir1 10
-#define enableRotMotor 9
-#define rotMicrostep 16  //MicrostepMode, only 1,2,4,8,16 allowed, because of Integer-Math in this Sketch
+#define enableRotMotor 12
+#define rotMicrostep 8  //MicrostepMode, only 1,2,4,8,16 allowed, because of Integer-Math in this Sketch
 //Pen Stepper:
-#define step2 8
-#define dir2 7
-#define enablePenMotor 6
+#define step2 9
+#define dir2 8
+#define enablePenMotor 5
 #define penMicrostep 16 //MicrostepMode, only 1,2,4,8,16 allowed, because of Integer-Math in this Sketch
 
-#define servoPin 3 //Servo
+#define servoPin 13 //Servo
 
 // EXTRAFEATURES - UNCOMMENT TO USE THEM -------------------------------------------------------------------
 
@@ -57,53 +64,54 @@ Servo penServo;
 SerialCommand SCmd;
 //create Buttons
 #ifdef prgButton
-	Button prgButtonToggle(prgButton, setprgButtonState);
+Button prgButtonToggle(prgButton, setprgButtonState);
 #endif
 #ifdef penToggleButton
-	Button penToggle(penToggleButton, doTogglePen);
+Button penToggle(penToggleButton, doTogglePen);
 #endif
 #ifdef motorsButton
-	Button motorsToggle(motorsButton, toggleMotors);
+Button motorsToggle(motorsButton, toggleMotors);
 #endif
 // Variables... be careful, by messing around here, everything has a reason and crossrelations...
-int penMin=0;
-int penMax=0;
-int penUpPos=5;  //can be overwritten from EBB-Command SC
-int penDownPos=20; //can be overwritten from EBB-Command SC
-int servoRateUp=0; //from EBB-Protocol not implemented on machine-side
-int servoRateDown=0; //from EBB-Protocol not implemented on machine-side
-long rotStepError=0;
-long penStepError=0;
-int penState=penUpPos;
-uint32_t nodeCount=0;
-unsigned int layer=0;
-boolean prgButtonState=0;
-uint8_t rotStepCorrection = 16/rotMicrostep ; //devide EBB-Coordinates by this factor to get EGGduino-Steps
-uint8_t penStepCorrection = 16/penMicrostep ; //devide EBB-Coordinates by this factor to get EGGduino-Steps
-float rotSpeed=0;
-float penSpeed=0; // these are local variables for Function SteppermotorMove-Command, but for performance-reasons it will be initialized here
+int penMin = 0;
+int penMax = 0;
+int penUpPos = 5; //can be overwritten from EBB-Command SC
+int penDownPos = 40; //can be overwritten from EBB-Command SC
+int servoRateUp = 0; //from EBB-Protocol not implemented on machine-side
+int servoRateDown = 0; //from EBB-Protocol not implemented on machine-side
+long rotStepError = 0;
+long penStepError = 0;
+int penState = penUpPos;
+uint32_t nodeCount = 0;
+unsigned int layer = 0;
+boolean prgButtonState = 0;
+uint8_t rotStepCorrection = 16 / rotMicrostep ; //devide EBB-Coordinates by this factor to get EGGduino-Steps
+uint8_t penStepCorrection = 16 / penMicrostep ; //devide EBB-Coordinates by this factor to get EGGduino-Steps
+float rotSpeed = 0;
+float penSpeed = 0; // these are local variables for Function SteppermotorMove-Command, but for performance-reasons it will be initialized here
 boolean motorsEnabled = 0;
 
-void setup() {   
-	Serial.begin(9600);
-	makeComInterface();
-	initHardware();
+void setup() {
+  Serial.begin(9600);
+  makeComInterface();
+  initHardware();
+  sendVersion();
 }
 
 void loop() {
-	moveOneStep();
+  moveOneStep();
 
-	SCmd.readSerial();
+  SCmd.readSerial();
 
 #ifdef penToggleButton
-	penToggle.check();
+  penToggle.check();
 #endif
 
 #ifdef motorsButton
-	motorsToggle.check();
+  motorsToggle.check();
 #endif
 
 #ifdef prgButton
-	prgButtonToggle.check();
+  prgButtonToggle.check();
 #endif
 }
